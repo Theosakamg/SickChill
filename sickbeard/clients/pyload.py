@@ -23,10 +23,10 @@ import json
 from sickbeard.clients.generic import GenericClient
 from sickbeard import logger, helpers
 
-class PyLoadAPI(GenericClient):
+class Client(GenericClient):
     def __init__(self, host=None, username=None, password=None):
 
-        super(PyLoadAPI, self).__init__('pyLoad', host, username, password)
+        super(Client, self).__init__('pyLoad', host, username, password)
         self.username = sickbeard.DDL_USERNAME
         self.password = sickbeard.DDL_PASSWORD
         self.host = sickbeard.DDL_HOST
@@ -64,5 +64,3 @@ class PyLoadAPI(GenericClient):
         except Exception as error:
             helpers.handle_requests_exception(error)
             return False
-
-api = PyLoadAPI()

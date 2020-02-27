@@ -27,10 +27,10 @@ import sickbeard
 from sickbeard.clients.generic import GenericClient
 import myjdapi
 
-class JdownloaderAPI(GenericClient):
+class Client(GenericClient):
     def __init__(self, host=None, username=None, password=None):
 
-        super(JdownloaderAPI, self).__init__('Jdownloader', host, username, password)
+        super(Client, self).__init__('Jdownloader', host, username, password)
         self.username = sickbeard.DDL_USERNAME
         self.password = sickbeard.DDL_PASSWORD
         self.deviceName = sickbeard.JDOWNLOADER_DEVICE_NAME
@@ -56,5 +56,3 @@ class JdownloaderAPI(GenericClient):
             return False
 
         return True
-
-api = JdownloaderAPI()

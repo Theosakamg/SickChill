@@ -24,9 +24,9 @@ import re
 
 from sickbeard import logger, tvcache
 from sickbeard.common import USER_AGENT
-from sickrage.helper.common import try_int
-from sickrage.helper.common import convert_size
-from sickrage.providers.ddl.DDLProvider import DDLProvider
+from sickchill.helper.common import try_int
+from sickchill.helper.common import convert_size
+from sickchill.providers.ddl.DDLProvider import DDLProvider
 from sickbeard.bs4_parser import BS4Parser
 
 class ZoneTelechargementProvider(DDLProvider):  # pylint: disable=too-many-instance-attributes
@@ -37,9 +37,9 @@ class ZoneTelechargementProvider(DDLProvider):  # pylint: disable=too-many-insta
 
         self.cache = tvcache.TVCache(self, min_time=0)  # Only poll ZoneTelechargement every 10 minutes max
 
-        self.urls = {'base_url': 'https://ww2.zone-telechargement1.com',
-                     'search': 'https://ww2.zone-telechargement1.com/index.php?do=search',
-                     'rss': 'https://ww2.zone-telechargement1.com/rss.xml'}
+        self.urls = {'base_url': 'https://www.zone-annuaire.com',
+                     'search': 'https://www.zone-annuaire.com/index.php?do=search',
+                     'rss': 'https://www.zone-annuaire.com/rss.xml'}
 
         self.url = self.urls['base_url']
 
@@ -155,13 +155,21 @@ class ZoneTelechargementProvider(DDLProvider):  # pylint: disable=too-many-insta
                                         if  self.canUseProvider(providerDDLName) and \
                                             bTag.text.startswith("Episode "+str(int(episodeVersion))):
                                             providerDDLLink = bTag.find_all('a')[0]['href']
-                                            logger.log(providerDDLName, logger.DEBUG)
-                                            logger.log(title, logger.DEBUG)
-                                            logger.log(providerDDLLink, logger.DEBUG)
 
-                                            item = {'title': title, 'link': providerDDLLink}
-                                            items.append(item)
-                                            providerDDLName = ""
+                                            linkData = self.get_url(providerDDLLink \
+                                                    .replace("/to/", "/link/") \
+                                                    .replace("/voirlien/", "/telecharger/"))
+
+                                            with BS4Parser(linkData, 'html5lib') as linkPage:
+                                                providerDDLLink = linkPage.select("main > div.container")[0].find("a", recursive = True)["href"]
+
+                                                logger.log(providerDDLName, logger.DEBUG)
+                                                logger.log(title, logger.DEBUG)
+                                                logger.log(providerDDLLink, logger.DEBUG)
+
+                                                item = {'title': title, 'link': providerDDLLink}
+                                                items.append(item)
+                                                providerDDLName = ""
 
 
 
