@@ -1,36 +1,44 @@
 # coding=utf-8
 # Author: Nic Wolfe <nic@wolfeden.ca>
-# URL: https://sickrage.github.io
-# Git: https://github.com/SickRage/SickRage.git
+# URL: https://sickchill.github.io
+# Git: https://github.com/SickChill/SickChill.git
 #
-# This file is part of SickRage.
+# This file is part of SickChill.
 #
-# SickRage is free software: you can redistribute it and/or modify
+# SickChill is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# SickRage is distributed in the hope that it will be useful,
+# SickChill is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
+# along with SickChill. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
+# Stdlib Imports
 import os.path
+from mimetypes import guess_type
 
+# Third Party Imports
 from hachoir_core.log import log
 from hachoir_metadata import extractMetadata
 from hachoir_parser import createParser
 
+# First Party Imports
 import sickbeard
-from sickbeard import helpers, logger
-from sickbeard.metadata.generic import GenericMetadata
-from sickrage.helper.encoding import ek
-from sickrage.helper.exceptions import ShowDirectoryNotFoundException
+import sickchill
+from sickchill.helper.encoding import ek
+from sickchill.helper.exceptions import ShowDirectoryNotFoundException
+
+# Local Folder Imports
+from . import helpers, logger
+from .metadata.generic import GenericMetadata
+from .metadata.helpers import getShowImage
 
 log.use_print = False
 
@@ -129,7 +137,7 @@ class ImageCache(object):
         logger.log("Checking if file " + str(fanart_path) + " exists", logger.DEBUG)
         return ek(os.path.isfile, fanart_path)
 
-    def has_poster_thumbnail(self, indexer_id):
+    def has_poster_thumb(self, indexer_id):
         """
         Returns true if a cached poster thumbnail exists for the given Indexer ID
         """
@@ -137,13 +145,23 @@ class ImageCache(object):
         logger.log("Checking if file " + str(poster_thumb_path) + " exists", logger.DEBUG)
         return ek(os.path.isfile, poster_thumb_path)
 
-    def has_banner_thumbnail(self, indexer_id):
+    def has_banner_thumb(self, indexer_id):
         """
         Returns true if a cached banner exists for the given Indexer ID
         """
         banner_thumb_path = self.banner_thumb_path(indexer_id)
         logger.log("Checking if file " + str(banner_thumb_path) + " exists", logger.DEBUG)
         return ek(os.path.isfile, banner_thumb_path)
+
+    def image_url(self, indexer_id, which):
+        path = self.__getattribute__(which + "_path")(indexer_id)
+        if ek(os.path.isfile, path):
+            try:
+                return 'cache' + path.split(sickbeard.CACHE_DIR)[1].replace('\\', '/')
+            except (AttributeError, ValueError, IndexError):
+                logger.log('Error with cache path, path={}, cache={}, split={}'.format(
+                    path, sickbeard.CACHE_DIR, str(path.split(sickbeard.CACHE_DIR))))
+        return ('images/poster.png', 'images/banner.png')['banner' in which]
 
     BANNER = 1
     POSTER = 2
@@ -189,6 +207,29 @@ class ImageCache(object):
         else:
             logger.log("Image has size ratio of " + str(img_ratio) + ", unknown type", logger.WARNING)
             return None
+
+    @staticmethod
+    def image_data(path):
+        """
+        :return: The content of the desired media file
+        """
+
+        if ek(os.path.isfile, path):
+            with open(path, 'rb') as content:
+                return content.read()
+
+        return None
+
+    @staticmethod
+    def content_type(path):
+        """
+        :return: The mime type of the current media
+        """
+
+        if ek(os.path.isfile, path):
+            return guess_type(path)[0]
+
+        return ''
 
     def _cache_image_from_file(self, image_path, img_type, indexer_id):
         """
@@ -236,19 +277,19 @@ class ImageCache(object):
 
         # generate the path based on the type & indexer_id
         if img_type == self.POSTER:
-            img_type_name = 'poster'
+            img_url = sickchill.indexer.series_poster_url(show_obj)
             dest_path = self.poster_path(show_obj.indexerid)
         elif img_type == self.BANNER:
-            img_type_name = 'banner'
+            img_url = sickchill.indexer.series_banner_url(show_obj)
             dest_path = self.banner_path(show_obj.indexerid)
         elif img_type == self.POSTER_THUMB:
-            img_type_name = 'poster_thumb'
+            img_url = sickchill.indexer.series_poster_url(show_obj, thumb=True)
             dest_path = self.poster_thumb_path(show_obj.indexerid)
         elif img_type == self.BANNER_THUMB:
-            img_type_name = 'banner_thumb'
+            img_url = sickchill.indexer.series_banner_url(show_obj, thumb=True)
             dest_path = self.banner_thumb_path(show_obj.indexerid)
         elif img_type == self.FANART:
-            img_type_name = 'fanart'
+            img_url = sickchill.indexer.series_fanart_url(show_obj)
             dest_path = self.fanart_path(show_obj.indexerid)
         else:
             logger.log("Invalid cache image type: " + str(img_type), logger.ERROR)
@@ -257,7 +298,7 @@ class ImageCache(object):
         # retrieve the image from indexer using the generic metadata class
         # TODO: refactor
         metadata_generator = GenericMetadata()
-        img_data = metadata_generator._retrieve_show_image(img_type_name, show_obj)
+        img_data = getShowImage(img_url)
         result = metadata_generator._write_image(img_data, dest_path)
 
         return result
@@ -275,8 +316,8 @@ class ImageCache(object):
         # check if the images are already cached or not
         need_images = {self.POSTER: not self.has_poster(show_obj.indexerid),
                        self.BANNER: not self.has_banner(show_obj.indexerid),
-                       self.POSTER_THUMB: not self.has_poster_thumbnail(show_obj.indexerid),
-                       self.BANNER_THUMB: not self.has_banner_thumbnail(show_obj.indexerid),
+                       self.POSTER_THUMB: not self.has_poster_thumb(show_obj.indexerid),
+                       self.BANNER_THUMB: not self.has_banner_thumb(show_obj.indexerid),
                        self.FANART: not self.has_fanart(show_obj.indexerid)}
 
         if not need_images[self.POSTER] and not need_images[self.BANNER] and not need_images[self.POSTER_THUMB] and not need_images[self.BANNER_THUMB] and not need_images[self.FANART]:
@@ -308,7 +349,7 @@ class ImageCache(object):
                             self._cache_image_from_file(cur_file_name, cur_file_type, show_obj.indexerid)
                             need_images[cur_file_type] = False
             except ShowDirectoryNotFoundException:
-                logger.log("Unable to search for images in show dir because it doesn't exist", logger.WARNING)
+                logger.log("Unable to search for images in show dir because it doesn't exist", logger.DEBUG)
 
         # download from indexer for missing ones
         for cur_image_type in [self.POSTER, self.BANNER, self.POSTER_THUMB, self.BANNER_THUMB, self.FANART]:

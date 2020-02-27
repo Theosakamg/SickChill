@@ -2,25 +2,26 @@
 # Author: medariox <dariox@gmx.com>,
 # based on Antoine Bertin's <diaoulael@gmail.com> work
 # and originally written by Nyaran <nyayukko@gmail.com>
-# URL: https://github.com/SickRage/SickRage/
+# URL: https://github.com/SickChill/SickChill/
 #
-# This file is part of SickRage.
+# This file is part of SickChill.
 #
-# SickRage is free software: you can redistribute it and/or modify
+# SickChill is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# SickRage is distributed in the hope that it will be useful,
+# SickChill is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
+# along with SickChill. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
+# Stdlib Imports
 import datetime
 import os
 import re
@@ -28,32 +29,38 @@ import subprocess
 import threading
 import traceback
 
+# Third Party Imports
 import six
 import subliminal
 from babelfish import Language, language_converters
 from guessit import guessit
 from subliminal import Episode, provider_manager, ProviderPool
 
+# First Party Imports
 import sickbeard
-from sickbeard import db, history, logger
-from sickbeard.common import Quality
-from sickbeard.helpers import is_media_file
-from sickrage.helper.common import dateTimeFormat, episode_num
-from sickrage.helper.exceptions import ex
-from sickrage.show.Show import Show
+from sickchill.helper.common import dateTimeFormat, episode_num
+from sickchill.helper.exceptions import ex
+from sickchill.show.Show import Show
+
+# Local Folder Imports
+from . import db, history, logger
+from .common import Quality
+from .helpers import is_media_file
 
 # https://github.com/Diaoul/subliminal/issues/536
 # provider_manager.register('napiprojekt = subliminal.providers.napiprojekt:NapiProjektProvider')
 if 'legendastv' not in provider_manager.names():
     provider_manager.register('legendastv = subliminal.providers.legendastv:LegendasTVProvider')
 if 'itasa' not in provider_manager.names():
-    provider_manager.register('itasa = sickrage.providers.subtitle.itasa:ItaSAProvider')
+    provider_manager.register('itasa = sickchill.providers.subtitle.itasa:ItaSAProvider')
 if 'wizdom' not in provider_manager.names():
-    provider_manager.register('wizdom = sickrage.providers.subtitle.wizdom:WizdomProvider')
+    provider_manager.register('wizdom = sickchill.providers.subtitle.wizdom:WizdomProvider')
 # We disabled the original subscenter in lib/subliminal/extensions.py since it's outdated.
 # Until it gets an update in subliminal, we'll use a fixed provider.
 if 'subscenter' not in provider_manager.names():
-    provider_manager.register('subscenter = sickrage.providers.subtitle.subscenter:SubsCenterProvider')
+    provider_manager.register('subscenter = sickchill.providers.subtitle.subscenter:SubsCenterProvider')
+if 'subtitulamos' not in provider_manager.names():
+    provider_manager.register('subtitulamos = sickchill.providers.subtitle.subtitulamos:SubtitulamosProvider')
 
 subliminal.region.configure('dogpile.cache.memory')
 
@@ -65,13 +72,14 @@ PROVIDER_URLS = {
     'opensubtitles': 'http://www.opensubtitles.org',
     'podnapisi': 'http://www.podnapisi.net',
     'subscenter': 'http://www.subscenter.info',
+    'subtitulamos': 'https://www.subtitulamos.tv',
     'thesubdb': 'http://www.thesubdb.com',
     'wizdom': 'http://wizdom.xyz',
     'tvsubtitles': 'http://www.tvsubtitles.net'
 }
 
 
-class SubtitleProviderPool(object):  # pylint: disable=too-few-public-methods
+class SubtitleProviderPool(object):
     _lock = threading.Lock()
     _creation = None
     _instance = None
@@ -185,7 +193,7 @@ def needs_subtitles(subtitles, force_lang=None):
 def from_code(language):
     language = language.strip()
     if language and language in language_converters['opensubtitles'].codes:
-        return Language.fromopensubtitles(language)  # pylint: disable=no-member
+        return Language.fromopensubtitles(language)
 
     return Language('und')
 
@@ -198,7 +206,7 @@ def code_from_code(code):
     return from_code(code).opensubtitles
 
 
-def download_subtitles(episode, force_lang=None):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+def download_subtitles(episode, force_lang=None):
     existing_subtitles = episode.subtitles
 
     if not needs_subtitles(existing_subtitles, force_lang):
@@ -265,7 +273,7 @@ def download_subtitles(episode, force_lang=None):  # pylint: disable=too-many-lo
                                                        min_score=user_score, only_one=not sickbeard.SUBTITLES_MULTI)
 
         subliminal.save_subtitles(video, found_subtitles, directory=subtitles_path,
-                                  single=not sickbeard.SUBTITLES_MULTI)
+                                  single=not sickbeard.SUBTITLES_MULTI, encoding='utf8')
     except IOError as error:
         if 'No space left on device' in ex(error):
             logger.log('Not enough space on the drive to save subtitles', logger.WARNING)
@@ -346,7 +354,7 @@ def get_video(video_path, subtitles_path=None, subtitles=True, embedded_subtitle
         if embedded_subtitles is None:
             embedded_subtitles = bool(not sickbeard.EMBEDDED_SUBTITLES_ALL and video_path.endswith('.mkv'))
 
-        # Let sickrage add more information to video file, based on the metadata.
+        # Let sickchill add more information to video file, based on the metadata.
         if episode:
             refine_video(video, episode)
 
@@ -395,7 +403,7 @@ def get_subtitles(video):
     return sorted(result_list)
 
 
-class SubtitlesFinder(object):  # pylint: disable=too-few-public-methods
+class SubtitlesFinder(object):
     """The SubtitlesFinder will be executed every hour but will not necessarly search and download subtitles.
 
     Only if the defined rule is true.
@@ -404,7 +412,7 @@ class SubtitlesFinder(object):  # pylint: disable=too-few-public-methods
     def __init__(self):
         self.amActive = False
 
-    def run(self, force=False):  # pylint: disable=too-many-branches, too-many-statements, too-many-locals
+    def run(self, force=False):
         if not sickbeard.USE_SUBTITLES:
             return
 
@@ -591,7 +599,7 @@ def refine_video(video, episode):
             setattr(video, name, get_attr_value(episode, metadata_mapping[name]))
 
     # Set quality from metadata
-    _, quality = Quality.splitCompositeStatus(episode.status)
+    status, quality = Quality.splitCompositeStatus(episode.status)
     if not video.format or episode.show.subtitles_sr_metadata:
         if quality & Quality.ANYHDTV:
             video.format = Quality.combinedQualityStrings.get(Quality.ANYHDTV)

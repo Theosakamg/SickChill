@@ -1394,6 +1394,10 @@ td.col-search {
     background-position: -439px 0;
 }
 
+.displayshow-icon-trakt {
+    background-position: -456px 0;
+}
+
 /* =======================================================================
 schedule.mako
 ========================================================================== */
@@ -1800,7 +1804,7 @@ select .selected {
     vertical-align: text-top;
 }
 
-.icon16-config-sickrage {
+.icon16-config-sickchill {
     background-position: 0 0;
 }
 
@@ -1898,7 +1902,7 @@ select .selected {
     background-position: -106px 0;
 }
 
-.add-client-icon-qbittorrent {
+.add-client-icon-qbittorrent, .add-client-icon-new-qbittorrent {
     background-position: -138px 0;
 }
 
@@ -2063,6 +2067,12 @@ div.metadataDiv .disabled {
     background-size: 32px;
 }
 
+.icon-notifiers-matrix {
+    background: url("../images/Matrix_Web.png");
+    background-size: 32px;
+    background-color: white;
+}
+
 .icon-notifiers-discord {
     background: url("../images/32px_discord_notifier.png");
     background-size: 32px;
@@ -2118,10 +2128,6 @@ div.metadataDiv .disabled {
 
 .icon-notifiers-boxcar2 {
     background-position: -414px 0;
-}
-
-.icon-notifiers-nma {
-    background-position: -450px 0;
 }
 
 .icon-notifiers-pushalot {
@@ -3728,4 +3734,17 @@ input.tablesorter-filter.disabled {
 
 #episodeDir {
     width: 100%;
+}
+
+[class^="displayshow-play-icon-"], [class*=" displayshow-play-icon-"] {
+    background: url("../images/16px_sprite_colored_display-show-players.png");
+    height: 16px;
+    width: 16px;
+    display: inline-block;
+    position: unset;
+    top: 3px;
+}
+
+.displayshow-play-icon-kodi {
+    background-position: 0 0;
 }

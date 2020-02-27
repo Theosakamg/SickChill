@@ -88,7 +88,7 @@ window._ = function(str) {
     return str;
 };
 
-var SICKRAGE = {
+var SICKCHILL = {
     common: {
         init: function() {
             (function() {
@@ -98,8 +98,8 @@ var SICKRAGE = {
                         imgDefer[i].setAttribute('src', imgDefer[i].getAttribute('data-src'));
                     }
                 }
-                if (metaToBool('sickbeard.SICKRAGE_BACKGROUND')) {
-                    $.backstretch(srRoot + '/ui/sickrage_background');
+                if (metaToBool('sickbeard.SICKCHILL_BACKGROUND')) {
+                    $.backstretch(srRoot + '/ui/sickchill_background');
                     $('.backstretch').css('opacity', getMeta('sickbeard.FANART_BACKGROUND_OPACITY')).fadeIn('500');
                 }
             })();
@@ -118,12 +118,12 @@ var SICKRAGE = {
 
             $('a.shutdown').confirm({
                 title: 'Shutdown',
-                text: 'Are you sure you want to shutdown SickRage?'
+                text: 'Are you sure you want to shutdown SickChill?'
             });
 
             $('a.restart').confirm({
                 title: 'Restart',
-                text: 'Are you sure you want to restart SickRage?'
+                text: 'Are you sure you want to restart SickChill?'
             });
 
             $('a.removeshow').confirm({
@@ -149,7 +149,7 @@ var SICKRAGE = {
 
             $('a.submiterrors').confirm({
                 title: 'Submit Errors',
-                text: 'Are you sure you want to submit these errors ?<br><br><span class="red-text">Make sure SickRage is updated and trigger<br> this error with debug enabled before submitting</span>'
+                text: 'Are you sure you want to submit these errors ?<br><br><span class="red-text">Make sure SickChill is updated and trigger<br> this error with debug enabled before submitting</span>'
             });
 
             $('#config-components').tabs({
@@ -394,29 +394,13 @@ var SICKRAGE = {
                 });
             });
 
-            // GitHub Auth Types
-            function setupGithubAuthTypes() {
-                const selected = parseInt($('input[name="git_auth_type"]').filter(':checked').val(), 10);
-
-                $('div[name="content_github_auth_type"]').each(function(index) {
-                    if (index === selected) {
-                        $(this).show();
-                    } else {
-                        $(this).hide();
-                    }
-                });
-            }
-
-            setupGithubAuthTypes();
-
-            $('input[name="git_auth_type"]').on('click', setupGithubAuthTypes);
-
             $('#git_token').on('click', $('#git_token').select());
 
             $('#create_access_token').on('click', function() {
                 notifyModal(
                     '<p>Copy the generated token and paste it in the token input box.</p>' +
-                    '<p><a href="' + anonURL + 'https://github.com/settings/tokens/new?description=SickRage&scopes=user,gist,public_repo" target="_blank">' +
+                    '<p>Provide permissions for repo:status, public_repo, write:discussion, read:discussion, user, gist, and notifications</p>' +
+                    '<p><a href="' + anonURL + 'https://github.com/settings/tokens/new?description=SickChill&scopes=user,gist,public_repo" target="_blank">' +
                     '<input class="btn" type="button" value="Continue to Github..."></a></p>');
                 $('#git_token').select();
             });
@@ -427,7 +411,7 @@ var SICKRAGE = {
         },
         index: function() {
             $('#log_dir').fileBrowser({title: _('Select log file folder location')});
-            $('#sickrage_background_path').fileBrowser({title: _('Select Background Image'), key: 'sickrage_background_path', includeFiles: 1, fileTypes: ['images']});
+            $('#sickchill_background_path').fileBrowser({title: _('Select Background Image'), key: 'sickchill_background_path', includeFiles: 1, fileTypes: ['images']});
             $('#custom_css_path').fileBrowser({title: _('Select CSS file'), key: 'custom_css_path', includeFiles: 1, fileTypes: ['css']});
 
             // List remote branches available for checkout
@@ -723,6 +707,12 @@ var SICKRAGE = {
             $('#testSlack').on('click', function() {
                 $.post(srRoot + '/home/testSlack', function(data) {
                     $('#testSlack-result').html(data);
+                });
+            });
+
+            $('#testMatrix').on('click', function() {
+                $.post(srRoot + '/home/testMatrix', function(data) {
+                    $('#testMatrix-result').html(data);
                 });
             });
 
@@ -1040,27 +1030,6 @@ var SICKRAGE = {
                 }
             });
 
-            $('#testNMA').on('click', function() {
-                const nma = {};
-                nma.api = $.trim($('#nma_api').val());
-                nma.priority = $('#nma_priority').val();
-                if (!nma.api) {
-                    $('#testNMA-result').html(_('Please fill out the necessary fields above.'));
-                    $('#nma_api').addClass('warning');
-                    return;
-                }
-                $('#nma_api').removeClass('warning');
-                $(this).prop('disabled', true);
-                $('#testNMA-result').html(loading);
-                $.post(srRoot + '/home/testNMA', {
-                    nma_api: nma.api, // eslint-disable-line camelcase
-                    nma_priority: nma.priority // eslint-disable-line camelcase
-                }).done(function(data) {
-                    $('#testNMA-result').html(data);
-                    $('#testNMA').prop('disabled', false);
-                });
-            });
-
             $('#testPushalot').on('click', function() {
                 const pushalot = {};
                 pushalot.authToken = $.trim($('#pushalot_authorizationtoken').val());
@@ -1196,17 +1165,17 @@ var SICKRAGE = {
 
             function loadShowNotifyLists() {
                 $.getJSON(srRoot + '/home/loadShowNotifyLists', function(list) {
-                    let html = null;
-                    let s = null; // @TODO: What is an "s"?
                     if (list._size === 0) {
                         return;
                     }
 
                     // Convert the 'list' object to a js array of objects so that we can sort it
                     const _list = [];
-                    for (s in list) {
-                        if (s.charAt(0) !== '_') {
-                            _list.push(list[s]);
+                    for (let _show in list) {
+                        if ({}.hasOwnProperty.call(list, _show)) {
+                            if (_show.charAt(0) !== '_') {
+                                _list.push(list[_show]);
+                            }
                         }
                     }
                     const sortedList = _list.sort(function(a, b) {
@@ -1218,10 +1187,12 @@ var SICKRAGE = {
                         }
                         return 0;
                     });
-                    html = '<option value="-1">-- Select --</option>';
-                    for (s in sortedList) {
-                        if (sortedList[s].id && sortedList[s].name) {
-                            html += '<option value="' + sortedList[s].id + '">' + $('<div/>').text(sortedList[s].name).html() + '</option>';
+                    let html = '<option value="-1">-- Select --</option>';
+                    for (let _show in sortedList) {
+                        if ({}.hasOwnProperty.call(sortedList, _show)) {
+                            if (sortedList[_show].id && sortedList[_show].name) {
+                                html += '<option value="' + sortedList[_show].id + '">' + $('<div>').text(sortedList[_show].name).html() + '</option>';
+                            }
                         }
                     }
                     $('#email_show').html(html);
@@ -1231,7 +1202,7 @@ var SICKRAGE = {
                     $('#prowl_show_list').val('');
                 });
             }
-            // Load the per show notify lists everytime this page is loaded
+            // Load the per show notify lists every time this page is loaded
             loadShowNotifyLists();
 
             // Update the internal data struct anytime settings are saved to the server
@@ -1797,6 +1768,8 @@ var SICKRAGE = {
             $('#nzb_dir').fileBrowser({title: _('Select .nzb black hole/watch location')});
             $('#torrent_dir').fileBrowser({title: _('Select .torrent black hole/watch location')});
             $('#torrent_path').fileBrowser({title: _('Select .torrent download location')});
+            $('#torrent_download_dir_deluge').fileBrowser({title: _('Select .torrent download location')});
+            $('#torrent_complete_dir_deluge').fileBrowser({title: _('Select .torrent completed location')});
 
             $.fn.nzbMethodHandler = function() {
                 const selectedProvider = $('#nzb_method :selected').val();
@@ -1877,10 +1850,6 @@ var SICKRAGE = {
                 $('#options_torrent_blackhole').hide();
 
                 const selectedProvider = $('#torrent_method :selected').val();
-                const host = ' host:port';
-                const username = ' username';
-                const password = ' password';
-                const rpcurl = ' RPC URL';
 
                 let optionPanel = '#options_torrent_blackhole';
                 let client = '';
@@ -1908,12 +1877,14 @@ var SICKRAGE = {
                     $('#torrent_paused_option').show();
                     $('#torrent_rpcurl_option').hide();
                     $('#torrent_host_option').show();
+                    $('#torrent_deluge_dirs_option').hide();
                     if (selectedProvider.toLowerCase() === 'utorrent') {
                         client = 'uTorrent';
                         $('#torrent_path_option').hide();
                         $('#torrent_seed_time_label').text(_('Minimum seeding time is'));
                         $('#torrent_seed_time_option').show();
                         $('#host_desc_torrent').text(_('URL to your uTorrent client (e.g. http://localhost:8000)'));
+                        $('#torrent_deluge_dirs_option').hide();
                     } else if (selectedProvider.toLowerCase() === 'transmission') {
                         client = 'Transmission';
                         $('#torrent_seed_time_label').text(_('Stop seeding when inactive for'));
@@ -1923,6 +1894,7 @@ var SICKRAGE = {
                         $('#torrent_label_anime_option').hide();
                         $('#torrent_rpcurl_option').show();
                         $('#host_desc_torrent').text(_('URL to your Transmission client (e.g. http://localhost:9091)'));
+                        $('#torrent_deluge_dirs_option').hide();
                     } else if (selectedProvider.toLowerCase() === 'deluge') {
                         client = 'Deluge';
                         $('#torrent_verify_cert_option').show();
@@ -1933,8 +1905,11 @@ var SICKRAGE = {
                         $('#torrent_username_option').hide();
                         $('#torrent_username').prop('value', '');
                         $('#host_desc_torrent').text(_('URL to your Deluge client (e.g. http://localhost:8112)'));
+                        $('#torrent_deluge_dirs_option').hide();
                     } else if (selectedProvider.toLowerCase() === 'deluged') {
                         client = 'Deluge';
+                        $('#torrent_path_option').hide();
+                        $('#torrent_deluge_dirs_option').show();
                         $('#torrent_verify_cert_option').hide();
                         $('#torrent_verify_deluge').hide();
                         $('#torrent_verify_rtorrent').hide();
@@ -1950,7 +1925,7 @@ var SICKRAGE = {
                         $('#torrent_path_option').find('.fileBrowser').hide();
                         $('#host_desc_torrent').text(_('URL to your Synology DS client (e.g. http://localhost:5000)'));
                         $('#path_synology').show();
-                    } else if (selectedProvider.toLowerCase() === 'rtorrent') {
+                    } else if (selectedProvider.toLowerCase() === 'rtorrent' || selectedProvider.toLowerCase() === 'rtorrent9') {
                         client = 'rTorrent';
                         $('#host_desc_torrent').html(_('URL to your rTorrent client (e.g. scgi://localhost:5000 <br> ' +
                                                         'or https://localhost/rutorrent/plugins/httprpc/action.php)'));
@@ -1958,8 +1933,8 @@ var SICKRAGE = {
                         $('#torrent_verify_deluge').hide();
                         $('#torrent_verify_rtorrent').show();
                         $('#torrent_auth_type_option').show();
-                    } else if (selectedProvider.toLowerCase() === 'qbittorrent') {
-                        client = 'qbittorrent';
+                    } else if (selectedProvider.toLowerCase() === 'qbittorrent' || selectedProvider.toLowerCase() === 'new_qbittorrent') {
+                        client = 'qBittorrent';
                         $('#torrent_path_option').hide();
                         $('#label_warning_qbittorrent').show();
                         $('#label_anime_warning_qbittorrent').show();
@@ -1991,18 +1966,18 @@ var SICKRAGE = {
                         $('#username_title.component-title').text(_('Put.io Parent Folder'));
                         $('#password_title.component-title').text(_('Put.io OAuth Token'));
                     }
-                    $('#host_title').text(client + host);
-                    $('#username_title').text(client + username);
-                    $('#password_title').text(client + password);
+                    $('#host_title').text(client + ' host:port');
+                    $('#username_title').text(client + ' Username');
+                    $('#password_title').text(client + ' Password');
                     $('#torrent_client').text(client);
-                    $('#rpcurl_title').text(client + rpcurl);
+                    $('#rpcurl_title').text(client + ' RPC URL');
                     optionPanel = '#options_torrent_clients';
                 }
                 $(optionPanel).show();
             };
 
             $('#torrent_host').on('input', function() {
-                if ($('#torrent_method :selected').val().toLowerCase() === 'rtorrent') {
+                if ($('#torrent_method :selected').val().toLowerCase() === 'rtorrent' || $('#torrent_method :selected').val().toLowerCase() === 'rtorrent9') {
                     const hostname = $('#torrent_host').val();
                     const isMatch = hostname.substr(0, 7) === 'scgi://';
 
@@ -2271,7 +2246,7 @@ var SICKRAGE = {
                         return $(node).find('time').attr('datetime');
                     },
                     3: function(node) {
-                        return $(node).find('span').prop('title').toLowerCase();
+                        return ($(node).find('span').prop('title') || 'zunknown').toLowerCase();
                     },
                     4: function(node) {
                         return $(node).find('span').text().toLowerCase();
@@ -2283,7 +2258,7 @@ var SICKRAGE = {
                         return $(node).data('show-size');
                     },
                     7: function(node) {
-                        return $(node).find('span').attr('title').toLowerCase();
+                        return ($(node).find('span').attr('title') || 'No').toLowerCase();
                     }
                 },
                 widgets: ['saveSort', 'zebra', 'stickyHeaders', 'filter', 'columnSelector'],
@@ -2300,7 +2275,7 @@ var SICKRAGE = {
                     filter_columnFilters: true, // eslint-disable-line camelcase
                     filter_hideFilters: true, // eslint-disable-line camelcase
                     stickyHeaders_offset: 50, // eslint-disable-line camelcase
-                    filter_saveFilters: true, // eslint-disable-line camelcase
+                    filter_saveFilters: false, // eslint-disable-line camelcase
                     filter_functions: { // eslint-disable-line camelcase
                         // HOWTO: https://mottie.github.io/tablesorter/docs/example-widget-filter-custom.html#notes
                         5: function(exact, normalized, filterInput) {
@@ -2367,10 +2342,11 @@ var SICKRAGE = {
             });
 
             $('.show-grid').imagesLoaded(function() {
+                var sort = getMeta('sickbeard.POSTER_SORTBY') === 'date' ? ['status', 'date', 'name'] : getMeta('sickbeard.POSTER_SORTBY');
                 $('.loading-spinner').hide();
                 $('.show-grid').show().isotope({
                     itemSelector: '.show-container',
-                    sortBy: getMeta('sickbeard.POSTER_SORTBY'),
+                    sortBy: sort,
                     sortAscending: getMeta('sickbeard.POSTER_SORTDIR'),
                     layoutMode: 'masonry',
                     masonry: {
@@ -2389,7 +2365,8 @@ var SICKRAGE = {
                         progress: function(itemElem) {
                             const progress = $(itemElem).attr('data-progress');
                             return (progress.length && parseInt(progress, 10)) || Number.NEGATIVE_INFINITY;
-                        }
+                        },
+                        status: '[data-status]'
                     }
                 });
 
@@ -2462,7 +2439,7 @@ var SICKRAGE = {
             });
 
             $('#postersort').on('change', function() {
-                $('.show-grid').isotope({sortBy: $(this).val()});
+                $('.show-grid').isotope({sortBy: $(this).val() === 'date' ? ['status', 'date', 'name'] : $(this).val()});
                 $.post($(this).find('option[value=' + $(this).val() + ']').attr('data-sort'));
             });
 
@@ -2485,7 +2462,7 @@ var SICKRAGE = {
         },
         displayShow: function() {
             if (metaToBool('sickbeard.FANART_BACKGROUND')) {
-                $.backstretch(srRoot + '/showPoster/?show=' + $('#showID').attr('value') + '&which=fanart');
+                $.backstretch(srRoot + '/cache/images/' + $('#showID').attr('value') + '.fanart.jpg');
                 $('.backstretch').css('opacity', getMeta('sickbeard.FANART_BACKGROUND_OPACITY')).fadeIn('500');
             }
 
@@ -2513,6 +2490,43 @@ var SICKRAGE = {
                 link.prop('enableClick', '0');
                 link.fadeTo('fast', 0.5);
             }
+
+            $('.play-on-kodi').on('click', function() {
+                if ($(this).prop('enableClick') === '0') {
+                    return false;
+                }
+
+                const selectedEpisode = $(this);
+                const playModal = $('#playOnKodiModal');
+
+                $('#playOnKodiModal .btn.btn-success').on('click', function() {
+                    disableLink(selectedEpisode);
+                    playModal.modal('hide');
+
+                    const img = selectedEpisode.children('img');
+                    img.hide();
+
+                    selectedEpisode.append($('<span/>').attr({class: 'loading-spinner16', title: 'Playing'}));
+                    const icon = selectedEpisode.children('span');
+
+                    const host = $('#kodi-play-host').val();
+                    $.getJSON(selectedEpisode.prop('href') + '&host=' + host, function(data) {
+                        if (data.result.toLowerCase() === 'failure') {
+                            icon.prop('class', 'displayshow-icon-disable');
+                            icon.prop('title', 'Failed');
+                        } else {
+                            img.prop('title', 'Success');
+                            img.prop('alt', 'Success');
+                            icon.hide();
+                            img.show();
+                        }
+                    });
+                    enableLink(selectedEpisode);
+                    return false;
+                });
+                playModal.modal('show');
+                return false;
+            });
 
             $('.epSubtitlesSearch').on('click', function() {
                 if ($(this).prop('enableClick') === '0') {
@@ -2895,11 +2909,11 @@ var SICKRAGE = {
         editShow: function() {
             $('#location').fileBrowser({title: _('Select Show Location')});
 
-            SICKRAGE.common.QualityChooser.init();
+            SICKCHILL.common.QualityChooser.init();
 
             // @TODO: Make anime button work like in addShow (opens the groups list without a refresh)
             /* $('#anime').change (function() {
-                SICKRAGE.common.updateBlackWhiteList(getMeta('show.name'));
+                SICKCHILL.common.updateBlackWhiteList(getMeta('show.name'));
             }); */
 
             $('#submit').on('click', function() {
@@ -2910,6 +2924,10 @@ var SICKRAGE = {
 
                         return encodeURIComponent(exception);
                     }).join('|');
+
+                    if (exceptions.length < 1) {
+                        return null;
+                    }
 
                     return [season, exceptions].join(':');
                 }).filter(function(item) {
@@ -3355,7 +3373,7 @@ var SICKRAGE = {
                 $('#display_new_root_dir_' + curIndex).html('<b>' + _('DELETED') + '</b>');
             });
 
-            SICKRAGE.common.QualityChooser.init();
+            SICKCHILL.common.QualityChooser.init();
         },
         episodeStatuses: function() {
             $('.allCheck').on('click', function() {
@@ -3403,7 +3421,7 @@ var SICKRAGE = {
             });
 
             // Clears all visible episode checkboxes and the season selectors
-            $('.unselectAllShows').on('click', function() {
+            $('.deselectAllShows').on('click', function() {
                 $('.allCheck').each(function() {
                     this.checked = false;
                 });
@@ -3460,7 +3478,7 @@ var SICKRAGE = {
             });
 
             // Clears all visible episode checkboxes and the season selectors
-            $('.unselectAllShows').on('click', function() {
+            $('.deselectAllShows').on('click', function() {
                 $('.allCheck').each(function() {
                     this.checked = false;
                 });
@@ -3541,8 +3559,7 @@ var SICKRAGE = {
             });
 
             $('#history_limit').on('change', function() {
-                const url = srRoot + '/history/?limit=' + $(this).val();
-                window.location.href = url;
+                window.location.href = srRoot + '/history/?limit=' + $(this).val();
             });
 
             $('a.removehistory').on('click', function() {
@@ -3696,7 +3713,7 @@ var SICKRAGE = {
                     widgetOptions: {
                         filter_columnFilters: true, // eslint-disable-line camelcase
                         filter_hideFilters: true, // eslint-disable-line camelcase
-                        filter_saveFilters: true, // eslint-disable-line camelcase
+                        filter_saveFilters: false, // eslint-disable-line camelcase
                         columnSelector_mediaquery: false, // eslint-disable-line camelcase
                         stickyHeaders_offset: 50 // eslint-disable-line camelcase
                     }
@@ -3853,7 +3870,7 @@ var SICKRAGE = {
                 $('#saveDefaultsButton').attr('disabled', false);
             });
 
-            SICKRAGE.common.QualityChooser.init();
+            SICKCHILL.common.QualityChooser.init();
         },
         index: function() {
 
@@ -3874,7 +3891,7 @@ var SICKRAGE = {
                     object.showName = $('#providedName').val();
                 }
 
-                SICKRAGE.common.updateBlackWhiteList(object.showName);
+                SICKCHILL.common.updateBlackWhiteList(object.showName);
 
                 // If we have a root dir selected, figure out the path
                 if ($('#rootDirs option:selected').length) {
@@ -3925,17 +3942,18 @@ var SICKRAGE = {
                 let table =
                     '<div class="row">' +
                     '<div class="col-lg-6 col-md-12">' +
-                    '<table class="sickbeardTable new-show-table">' +
+                    '<table class="sickbeardTable new-show-table tablesorter">' +
                     '<thead>' +
                     '<tr>' +
-                    '<th style="width:40px;">&nbsp;</th>' +
+                    '<th></th>' +
                     '<th>Show Name</th>' +
                     '<th>Premiere</th>' +
                     '<th>Indexer</th>' +
                     '</tr>' +
-                    '<thead>';
+                    '</thead>' +
+                    '<tbody>';
 
-                const selectedIndex = shows.findIndex(function(show) {
+                const selectedIndex = shows.indexOf(function(show) {
                     return !show.inShowList;
                 });
 
@@ -3965,6 +3983,7 @@ var SICKRAGE = {
                 });
 
                 table +=
+                    '</tbody>' +
                     '</table>' +
                     '</div>' +
                     '</div>';
@@ -3974,12 +3993,11 @@ var SICKRAGE = {
 
             let searchRequestXhr = null;
             const searchIndexers = function() {
-                if (!$('#show-name').val()) {
-                    return;
-                }
-
                 if (searchRequestXhr) {
                     searchRequestXhr.abort();
+                }
+                if (!$('#show-name').val()) {
+                    return;
                 }
 
                 const searchingFor = _($('#show-name').val().trim() + ' on ' + $('#providedIndexer option:selected').text() + ' in ' + $('#indexerLangSelect option:selected').text());
@@ -4003,7 +4021,6 @@ var SICKRAGE = {
                     },
                     success: function(data) {
                         let resultStr = '<legend class="legendStep">#2 Pick a Show</legend>';
-
                         if (data.results.length === 0) {
                             resultStr += '<b>No results found, try a different search.</b>';
                             $('.next-steps').hide();
@@ -4037,6 +4054,11 @@ var SICKRAGE = {
 
                         $('#searchResults').html(resultStr);
                         updateSampleText();
+                        $('.new-show-table').tablesorter(
+                            {
+                                widgets: ['stickyHeaders', 'zebra', 'saveSort'],
+                                headers: {0: {sorter: false}}
+                            });
                     }
                 });
             };
@@ -4202,7 +4224,7 @@ var SICKRAGE = {
 
 const UTIL = {
     exec: function(controller, action) {
-        const ns = SICKRAGE;
+        const ns = SICKCHILL;
         action = (action === undefined) ? 'init' : action;
 
         if (controller !== '' && ns[controller] && typeof ns[controller][action] === 'function') {

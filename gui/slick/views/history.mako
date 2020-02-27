@@ -9,9 +9,9 @@
     from sickbeard.common import ARCHIVED, SNATCHED, FAILED, DOWNLOADED, SUBTITLED
     from sickbeard.common import Quality, statusStrings
 
-    from sickrage.show.History import History
-    from sickrage.helper.encoding import ek
-    from sickrage.providers.GenericProvider import GenericProvider
+    from sickchill.show.History import History
+    from sickchill.helper.encoding import ek
+    from sickchill.providers.GenericProvider import GenericProvider
 %>
 <%block name="content">
     <%namespace file="/inc_defs.mako" import="renderQualityPill"/>
@@ -70,8 +70,11 @@
                             <% curStatus, curQuality = Quality.splitCompositeStatus(int(hItem[b"action"])) %>
                                 <tr>
                                     <td align="center">
-                                        <% airDate = sbdatetime.sbdatetime.sbfdatetime(datetime.datetime.strptime(str(hItem[b"date"]), History.date_format), show_seconds=True) %>
-                                        <% isoDate = datetime.datetime.strptime(str(hItem[b"date"]), History.date_format).isoformat('T') %>
+                                        <%
+                                            # noinspection PyCallByClass
+                                            airDate = sbdatetime.sbdatetime.sbfdatetime(datetime.datetime.strptime(str(hItem[b"date"]), History.date_format), show_seconds=True)
+                                            isoDate = datetime.datetime.strptime(str(hItem[b"date"]), History.date_format).isoformat('T')
+                                        %>
                                         <time datetime="${isoDate}" class="date">${airDate}</time>
                                     </td>
                                     <td class="tvShow" width="35%"><a href="${srRoot}/home/displayShow?show=${hItem[b"show_id"]}#S${hItem[b"season"]}E${hItem[b"episode"]}">${hItem[b"show_name"]} - ${"S%02i" % int(hItem[b"season"])}${"E%02i" % int(hItem[b"episode"])} ${('', '<span class="quality Proper">Proper</span>')[b"proper" in hItem[b"resource"].lower() or "repack" in hItem[b"resource"].lower()]}</a></td>
@@ -137,8 +140,11 @@
                             % for hItem in compactResults:
                                 <tr>
                                     <td align="center">
-                                        <% airDate = sbdatetime.sbdatetime.sbfdatetime(datetime.datetime.strptime(str(hItem[b"actions"][0][b"time"]), History.date_format), show_seconds=True) %>
-                                        <% isoDate = datetime.datetime.strptime(str(hItem[b"actions"][0][b"time"]), History.date_format).isoformat('T') %>
+                                        <%
+                                            # noinspection PyCallByClass
+                                            airDate = sbdatetime.sbdatetime.sbfdatetime(datetime.datetime.strptime(str(hItem[b"actions"][0][b"time"]), History.date_format), show_seconds=True)
+                                            isoDate = datetime.datetime.strptime(str(hItem[b"actions"][0][b"time"]), History.date_format).isoformat('T')
+                                        %>
                                         <time datetime="${isoDate}" class="date">${airDate}</time>
                                     </td>
                                     <td class="tvShow" width="25%">
@@ -195,7 +201,7 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <th class="nowrap" colspan="7">&nbsp;</th>
+                                <th class="nowrap" colspan="${("6", "7")[sickbeard.USE_SUBTITLES]}">&nbsp;</th>
                             </tr>
                         </tfoot>
                     % endif

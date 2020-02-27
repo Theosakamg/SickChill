@@ -67,16 +67,16 @@ module.exports = function(grunt) {
     ]);
 
     grunt.registerTask('genchanges', "Generate CHANGES.md file", function() {
-        var file = grunt.option('file'); // --file=path/to/sickrage.github.io/sickrage-news/CHANGES.md
+        var file = grunt.option('file'); // --file=path/to/sickchill.github.io/sickchill-news/CHANGES.md
         if (!file) {
-            file = process.env.SICKRAGE_CHANGES_FILE;
+            file = process.env.SICKCHILL_CHANGES_FILE;
         }
         if (file && grunt.file.exists(file)) {
             grunt.config('changesmd_file', file.replace(/\\/g, '/')); // Use forward slashes only.
         } else {
             grunt.fatal('\tYou must provide a path to CHANGES.md to generate changes.\n' +
-                '\t\tUse --file=path/to/sickrage.github.io/sickrage-news/CHANGES.md\n' +
-                '\t\tor set the path in SICKRAGE_CHANGES_FILE (environment variable)');
+                '\t\tUse --file=path/to/sickchill.github.io/sickchill-news/CHANGES.md\n' +
+                '\t\tor set the path in SICKCHILL_CHANGES_FILE (environment variable)');
         }
         grunt.task.run(['exec:git_list_tags', '_genchanges', 'exec:commit_changelog']);
     });
@@ -89,7 +89,7 @@ module.exports = function(grunt) {
         clean: {
             dist: './dist/',
             'bower_components': './bower_components',
-            fonts: './gui/slick/css/*.ttf',
+            fonts: './gui/slick/css/fonts',
             options: {
                 force: true
             }
@@ -111,9 +111,8 @@ module.exports = function(grunt) {
                 dependencies: {},
                 mainFiles: {
                     'tablesorter': [
-                        'dist/js/jquery.tablesorter.combined.js',
+                        'dist/js/jquery.tablesorter.combined.min.js',
                         'dist/js/widgets/widget-columnSelector.min.js',
-                        'dist/js/widgets/widget-stickyHeaders.min.js',
                         'dist/css/theme.blue.min.css'
                     ],
                     'bootstrap': [
@@ -130,8 +129,9 @@ module.exports = function(grunt) {
                         "item.js",
                         "outlayer.js"
                     ],
-                    "openSans": [
-                        "*.ttf", "*.css"
+                    "open-sans-fontface": [
+                        "*.css",
+                        "fonts/**/*"
                     ]
                 },
                 bowerOptions: {
@@ -144,9 +144,9 @@ module.exports = function(grunt) {
                 files: [{
                     expand: true,
                     dot: true,
-                    cwd: 'bower_components/openSans',
+                    cwd: 'bower_components/open-sans-fontface',
                     src: [
-                        '*.ttf'
+                        'fonts/**/*'
                     ],
                     dest: './gui/slick/css/'
                 }]
@@ -170,7 +170,7 @@ module.exports = function(grunt) {
         uglify: {
             bower: {
                 files: {
-                    './gui/slick/js/vender.min.js': ['./dist/bower.js']
+                    './gui/slick/js/vendor.min.js': ['./dist/bower.js']
                 }
             },
             core: {
@@ -186,7 +186,7 @@ module.exports = function(grunt) {
             },
             bower: {
                 files: {
-                    './gui/slick/css/vender.min.css': ['./dist/bower.css']
+                    './gui/slick/css/vendor.min.css': ['./dist/bower.css']
                 }
             },
             core: {
@@ -216,7 +216,7 @@ module.exports = function(grunt) {
             'crowdin_upload': {cmd: 'crowdin-cli-py upload sources'},
             'crowdin_download': {cmd: 'crowdin-cli-py download'},
             'babel_compile': {cmd: 'python setup.py compile_catalog'},
-		
+
             // Run tests
             'test': {cmd: 'yarn run test || npm run test'},
 
@@ -241,9 +241,9 @@ module.exports = function(grunt) {
 
                     var commitMsg = [];
                     var commitPaths = [];
-                    if (stdout.match(/gui\/.*(vender|core)\.min\.(js|css)$/gm)) {
+                    if (stdout.match(/gui\/.*(vendor|core)\.min\.(js|css)$/gm)) {
                         commitMsg.push('Grunt');
-                        commitPaths.push('gui/**/vender.min.*');
+                        commitPaths.push('gui/**/vendor.min.*');
                         commitPaths.push('gui/**/core.min.*');
                     }
                     if (stdout.match(/locale\/.*(pot|po|mo|json)$/gm)) {
@@ -296,6 +296,7 @@ module.exports = function(grunt) {
                     stdout = stdout.trim();
                     if (/^v\d{4}.\d{1,2}.\d{1,2}.\d+$/.test(stdout)) {
                         grunt.config('last_tag', stdout);
+                        grunt.log.write(stdout);
                     } else {
                         grunt.fatal('Could not get the last tag name. We got: ' + stdout);
                     }
@@ -306,7 +307,7 @@ module.exports = function(grunt) {
                 stdout: false,
                 callback: function(err, stdout) {
                     var commits = stdout.trim()
-                        .replace(/`/gm, '').replace(/^\([\w\d\s,.\-+_/>]+\)\s/gm, '');  // removes ` and tag information
+                        .replace(/`/gm, '').replace(/^\([\w\d\s,.\-+_/>]+\)\s/gm, '').replace(/"/gm, '\\"');  // removes ` and tag information
                     if (commits) {
                         grunt.config('commits', commits);
                     } else {
@@ -380,7 +381,7 @@ module.exports = function(grunt) {
                     if (!file) {
                         grunt.fatal('Missing file path.');
                     }
-                    var path = file.slice(0, -24); // slices 'sickrage-news/CHANGES.md' (len=24)
+                    var path = file.slice(0, -25); // slices 'sickchill-news/CHANGES.md' (len=25)
                     if (!path) {
                         grunt.fatal('path = "' + path + '"');
                     }
@@ -421,7 +422,7 @@ module.exports = function(grunt) {
             grunt.fatal('No tags information was received.');
         }
 
-        var file = grunt.config('changesmd_file'); // --file=path/to/sickrage.github.io/sickrage-news/CHANGES.md
+        var file = grunt.config('changesmd_file'); // --file=path/to/sickchill.github.io/sickchill-news/CHANGES.md
         if (!file) {
             grunt.fatal('Missing file path.');
         }
@@ -431,7 +432,7 @@ module.exports = function(grunt) {
             contents += '### ' + tag.tag + '\n';
             contents += '\n';
             if (tag.previous) {
-                contents += '[full changelog](https://github.com/SickRage/SickRage/compare/' +
+                contents += '[full changelog](https://github.com/SickChill/SickChill/compare/' +
                     tag.previous + '...' + tag.tag + ')\n';
             }
             contents += '\n';
@@ -442,7 +443,7 @@ module.exports = function(grunt) {
                         function(all, repoL, numL, repoR, typeR, numR) {
                             if (numL) { // repoL, numL = user/repo#1234 style
                                 return '[' + (repoL ? repoL : '') + '#' + numL + '](https://github.com/' +
-                                (repoL ? repoL : 'SickRage/SickRage') + '/issues/' + numL + ')';
+                                (repoL ? repoL : 'SickChill/SickChill') + '/issues/' + numL + ')';
                             } else if (numR) { // repoR, type, numR = https://github/user/repo/issues/1234 style
                                 return '[#' + numR + ']' + '(https://github.com/' +
                                     repoR + '/' + typeR + '/' + numR + ')';
@@ -450,7 +451,7 @@ module.exports = function(grunt) {
                     })
                     // shorten and link commit hashes
                     .replace(/([a-f0-9]{40}(?![a-f0-9]))/g, function(sha1) {
-                        return '[' + sha1.substr(0, 7) + '](https://github.com/SickRage/SickRage/commit/' + sha1 + ')';
+                        return '[' + sha1.substr(0, 7) + '](https://github.com/SickChill/SickChill/commit/' + sha1 + ')';
                     })
                     // remove tag information
                     .replace(/^\([\w\d\s,.\-+/>]+\)\s/gm, '')

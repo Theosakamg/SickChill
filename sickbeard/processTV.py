@@ -1,42 +1,45 @@
 # coding=utf-8
 # Author: Nic Wolfe <nic@wolfeden.ca>
-# URL: https://sickrage.github.io/
-# Git: https://github.com/SickRage/SickRage.git
+# URL: https://sickchill.github.io/
+# Git: https://github.com/SickChill/SickChill.git
 #
-# This file is part of SickRage.
+# This file is part of SickChill.
 #
-# SickRage is free software: you can redistribute it and/or modify
+# SickChill is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# SickRage is distributed in the hope that it will be useful,
+# SickChill is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with SickRage. If not, see <http://www.gnu.org/licenses/>.
+# along with SickChill. If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
+# Stdlib Imports
 import os
 import shutil
 import stat
 
-from rarfile import (BadRarFile, BadRarName, Error, NeedFirstVolume, NoCrypto, NoRarEntry, NotRarFile, PasswordRequired, RarCannotExec, RarCRCError,
-                     RarCreateError, RarExecError, RarFatalError, RarFile, RarLockedArchiveError, RarMemoryError, RarNoFilesError, RarOpenError, RarSignalExit,
-                     RarUnknownError, RarUserBreak, RarUserError, RarWarning, RarWriteError, RarWrongPassword)
+# Third Party Imports
+from rarfile import BadRarFile, Error, NeedFirstVolume, PasswordRequired, RarCRCError, RarExecError, RarFile, RarOpenError, RarWrongPassword
 
+# First Party Imports
 import sickbeard
-from sickbeard import common, db, failedProcessor, helpers, logger, postProcessor
-from sickbeard.name_parser.parser import InvalidNameException, InvalidShowException, NameParser
-from sickrage.helper.common import is_sync_file, is_torrent_or_nzb_file
-from sickrage.helper.encoding import ek, ss
-from sickrage.helper.exceptions import EpisodePostProcessingFailedException, ex, FailedPostProcessingFailedException
+from sickchill.helper.common import is_sync_file, is_torrent_or_nzb_file
+from sickchill.helper.encoding import ek
+from sickchill.helper.exceptions import EpisodePostProcessingFailedException, ex, FailedPostProcessingFailedException
+
+# Local Folder Imports
+from . import common, db, failedProcessor, helpers, logger, postProcessor
+from .name_parser.parser import InvalidNameException, InvalidShowException, NameParser
 
 
-class ProcessResult(object):  # pylint: disable=too-few-public-methods
+class ProcessResult(object):
     def __init__(self):
         self.result = True
         self.output = ''
@@ -127,7 +130,6 @@ def log_helper(message, level=logger.INFO):
     return message + "\n"
 
 
-# pylint: disable=too-many-arguments,too-many-branches,too-many-statements,too-many-locals
 def process_dir(process_path, release_name=None, process_method=None, force=False, is_priority=None, delete_on=False, failed=False, mode="auto"):
     """
     Scans through the files in process_path and processes whatever media files it finds
@@ -149,7 +151,7 @@ def process_dir(process_path, release_name=None, process_method=None, force=Fals
         process_path = ek(os.path.realpath, process_path)
         result.output += log_helper("Processing in folder {0}".format(process_path), logger.DEBUG)
 
-    # if the client and SickRage are not on the same machine translate the directory into a network directory
+    # if the client and SickChill are not on the same machine translate the directory into a network directory
     elif all([sickbeard.TV_DOWNLOAD_DIR,
               ek(os.path.isdir, sickbeard.TV_DOWNLOAD_DIR),
               ek(os.path.normpath, process_path) == ek(os.path.normpath, sickbeard.TV_DOWNLOAD_DIR)]):
@@ -159,7 +161,7 @@ def process_dir(process_path, release_name=None, process_method=None, force=Fals
     # if we didn't find a real dir then quit
     if not ek(os.path.isdir, process_path):
         result.output += log_helper("Unable to figure out what folder to process. "
-                                    "If your downloader and SickRage aren't on the same PC "
+                                    "If your downloader and SickChill aren't on the same PC "
                                     "make sure you fill out your TV download dir in the config.",
                                     logger.DEBUG)
         return result.output
@@ -251,7 +253,7 @@ def process_dir(process_path, release_name=None, process_method=None, force=Fals
     return result.output
 
 
-def validate_dir(process_path, release_name, failed, result):  # pylint: disable=too-many-locals,too-many-branches,too-many-return-statements
+def validate_dir(process_path, release_name, failed, result):
     """
     Check if directory is valid for processing
 
@@ -265,13 +267,13 @@ def validate_dir(process_path, release_name, failed, result):  # pylint: disable
     result.output += log_helper("Processing folder " + process_path, logger.DEBUG)
 
     upper_name = ek(os.path.basename, process_path).upper()
-    if upper_name.startswith('_FAILED_') or upper_name.endswith('_FAILED_'):
+    if upper_name.startswith('_FAILED_') or upper_name.endswith('_FAILED_') or (os.sep + '_FAILED_') in upper_name or ('_FAILED_' + os.sep ) in upper_name:
         result.output += log_helper("The directory name indicates it failed to extract.", logger.DEBUG)
         failed = True
-    elif upper_name.startswith('_UNDERSIZED_') or upper_name.endswith('_UNDERSIZED_'):
+    elif upper_name.startswith('_UNDERSIZED_') or upper_name.endswith('_UNDERSIZED_') or (os.sep + '_UNDERSIZED_') in upper_name or ('_UNDERSIZED_' + os.sep ) in upper_name:
         result.output += log_helper("The directory name indicates that it was previously rejected for being undersized.", logger.DEBUG)
         failed = True
-    elif upper_name.startswith('_UNPACK') or upper_name.endswith('_UNPACK'):
+    elif upper_name.startswith('_UNPACK') or upper_name.endswith('_UNPACK') or (os.sep + '_UNPACK') in upper_name or ('_UNPACK' + os.sep ) in upper_name:
         result.output += log_helper("The directory name indicates that this release is in the process of being unpacked.", logger.DEBUG)
         result.missed_files.append("{0} : Being unpacked".format(process_path))
         return False
@@ -308,7 +310,7 @@ def validate_dir(process_path, release_name, failed, result):  # pylint: disable
             continue
 
         found_files = filter(helpers.is_media_file, file_names)
-        if sickbeard.UNPACK == 1:
+        if sickbeard.UNPACK == sickbeard.UNPACK_PROCESS_CONTENTS:
             found_files += filter(helpers.is_rar_file, file_names)
 
         if current_directory != sickbeard.TV_DOWNLOAD_DIR and found_files:
@@ -326,7 +328,7 @@ def validate_dir(process_path, release_name, failed, result):  # pylint: disable
     return False
 
 
-def unrar(path, rar_files, force, result):  # pylint: disable=too-many-branches,too-many-statements
+def unrar(path, rar_files, force, result):
     """
     Extracts RAR files
 
@@ -339,7 +341,7 @@ def unrar(path, rar_files, force, result):  # pylint: disable=too-many-branches,
 
     unpacked_dirs = []
 
-    if sickbeard.UNPACK == 1 and rar_files:
+    if sickbeard.UNPACK == sickbeard.UNPACK_PROCESS_CONTENTS and rar_files:
         result.output += log_helper("Packed Releases detected: {0}".format(rar_files), logger.DEBUG)
         for archive in rar_files:
             failure = None
@@ -430,7 +432,7 @@ def unrar(path, rar_files, force, result):  # pylint: disable=too-many-branches,
     return unpacked_dirs
 
 
-def already_processed(process_path, video_file, force, result):  # pylint: disable=unused-argument
+def already_processed(process_path, video_file, force, result):
     """
     Check if we already post processed a file
 
@@ -455,7 +457,7 @@ def already_processed(process_path, video_file, force, result):  # pylint: disab
     try:  # if it fails to find any info (because we're doing an unparsable folder (like the TV root dir) it will throw an exception, which we want to ignore
         parse_result = NameParser(process_path, tryIndexers=True).parse(process_path)
     except (InvalidNameException, InvalidShowException):  # ignore the exception, because we kind of expected it, but create parse_result anyway so we can perform a check on it.
-        parse_result = False  # pylint: disable=redefined-variable-type
+        parse_result = False
 
     search_sql = "SELECT tv_episodes.indexerid, history.resource FROM tv_episodes INNER JOIN history ON history.showid=tv_episodes.showid" # This part is always the same
     search_sql += " WHERE history.season=tv_episodes.season AND history.episode=tv_episodes.episode"
@@ -475,7 +477,7 @@ def already_processed(process_path, video_file, force, result):  # pylint: disab
     return False
 
 
-def process_media(process_path, video_files, release_name, process_method, force, is_priority, result):  # pylint: disable=too-many-arguments
+def process_media(process_path, video_files, release_name, process_method, force, is_priority, result):
     """
     Postprocess mediafiles
 
