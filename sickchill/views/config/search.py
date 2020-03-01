@@ -61,7 +61,8 @@ class ConfigSearch(Config):
                    torrent_complete_dir_deluge=None, torrent_verify_cert=None,
                    torrent_seed_time=None, torrent_paused=None, torrent_high_bandwidth=None,
                    torrent_rpcurl=None, torrent_auth_type=None, ignore_words=None, trackers_list=None, require_words=None, ignored_subs_list=None,
-                   syno_dsm_host=None, syno_dsm_user=None, syno_dsm_pass=None, syno_dsm_path=None, quality_allow_hevc=False, prefer_words=None):
+                   syno_dsm_host=None, syno_dsm_user=None, syno_dsm_pass=None, syno_dsm_path=None, quality_allow_hevc=False, prefer_words=None,
+                   use_ddls=None, ddl_method=None, ddl_host=None, ddl_username=None, ddl_password=None, jdownloader_device_name=None, jdownloader_auto_start=None ):
 
         results = []
 
@@ -78,9 +79,11 @@ class ConfigSearch(Config):
 
         sickbeard.USE_NZBS = config.checkbox_to_value(use_nzbs)
         sickbeard.USE_TORRENTS = config.checkbox_to_value(use_torrents)
+        sickbeard.USE_DDLS = config.checkbox_to_value(use_ddls)
 
         sickbeard.NZB_METHOD = nzb_method
         sickbeard.TORRENT_METHOD = torrent_method
+        sickbeard.DDL_METHOD = ddl_method
         sickbeard.USENET_RETENTION = try_int(usenet_retention, 500)
 
         sickbeard.IGNORE_WORDS = ignore_words if ignore_words else ""
@@ -144,6 +147,13 @@ class ConfigSearch(Config):
         sickbeard.SYNOLOGY_DSM_USERNAME = syno_dsm_user
         sickbeard.SYNOLOGY_DSM_PASSWORD = filters.unhide(sickbeard.SYNOLOGY_DSM_PASSWORD, syno_dsm_pass)
         sickbeard.SYNOLOGY_DSM_PATH = syno_dsm_path.rstrip('/\\')
+
+        sickbeard.DDL_USERNAME = ddl_username
+        sickbeard.DDL_PASSWORD = filters.unhide(sickbeard.DDL_PASSWORD, ddl_password)
+        sickbeard.DDL_HOST = config.clean_host(ddl_host)
+
+        sickbeard.JDOWNLOADER_AUTO_START = config.checkbox_to_value(jdownloader_auto_start)
+        sickbeard.JDOWNLOADER_DEVICE_NAME = jdownloader_device_name
 
         # This is a PITA, but lets merge the settings if they only set DSM up in one section to save them some time
         if sickbeard.TORRENT_METHOD == 'download_station':
