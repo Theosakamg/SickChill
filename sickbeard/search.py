@@ -145,6 +145,7 @@ def snatchEpisode(result, endStatus=SNATCHED):
                 logger.log("Torrent file content is empty", logger.WARNING)
                 dlResult = False
 
+    # DDL can be sent to clients or saved to disk
     elif result.resultType == "ddl":
         client = clients.getClientInstance(sickbeard.DDL_METHOD)()
         dlResult = client.sendDDL(result)

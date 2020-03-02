@@ -151,9 +151,9 @@ class TorrentSearchResult(SearchResult):
         super(TorrentSearchResult, self).__init__(episodes)
         self.resultType = 'torrent'
 
-class DDLSearchResult(SearchResult):  # pylint: disable=too-few-public-methods
+class DDLSearchResult(SearchResult):
     """
-    Torrent result with an URL to the torrent
+    DDL result with an URL to the DDL
     """
     def __init__(self, episodes):
         super(DDLSearchResult, self).__init__(episodes)

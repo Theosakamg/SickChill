@@ -298,7 +298,7 @@ class GenericClient(object):
 
     def sendDDL(self, result):
         """
-        Sends the magnet, url, or torrent file content to the client
+        Sends url file content to the client
         params: :result: an instance of the searchResult class
         """
 
