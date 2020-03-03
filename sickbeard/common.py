@@ -388,7 +388,7 @@ class Quality(object):
             result = Quality.SDDVD
         elif ep.tv:
             # SD TV/HD TV
-            result = (Quality.SDTV, Quality.HDTV)[ep.tv == 'hd']
+            result = Quality.SDTV
         elif ep.raw or ep.mpeg:
             # RawHD
             result = Quality.RAWHDTV
