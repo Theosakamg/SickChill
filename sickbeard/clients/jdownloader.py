@@ -49,7 +49,7 @@ class Client(GenericClient):
         return True
 
     def _add_uri(self, result):
-        device=self.jd.get_device(self.deviceName)
+        device = self.jd.get_device(self.deviceName)
         try:
             device.linkgrabber.add_links([{"autostart" : self.autostart, "links" : result.url, "packageName" : self.packageName }])
         except Exception:

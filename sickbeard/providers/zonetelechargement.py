@@ -163,9 +163,7 @@ class ZoneTelechargementProvider(DDLProvider):  # pylint: disable=too-many-insta
                                             with BS4Parser(linkData, 'html5lib') as linkPage:
                                                 providerDDLLink = linkPage.select("main > div.container")[0].find("a", recursive = True)["href"]
 
-                                                logger.log(providerDDLName, logger.DEBUG)
-                                                logger.log(title, logger.DEBUG)
-                                                logger.log(providerDDLLink, logger.DEBUG)
+                                                logger.log(u"Search provider: {0} title: {1} link {2}".format(providerDDLName, title, providerDDLLink), logger.DEBUG)
 
                                                 item = {'title': title, 'link': providerDDLLink}
                                                 items.append(item)
